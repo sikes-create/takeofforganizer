@@ -39,7 +39,7 @@ function ChangePinPage() {
   const handle = (
     arr: string[],
     setArr: (v: string[]) => void,
-    refs: React.RefObject<HTMLInputElement>[],
+    refs: React.RefObject<HTMLInputElement | null>[],
     i: number,
     v: string,
   ) => {
