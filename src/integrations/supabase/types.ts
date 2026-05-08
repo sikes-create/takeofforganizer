@@ -17,18 +17,27 @@ export type Database = {
       app_users: {
         Row: {
           id: number
+          must_change_pin: boolean
           name: string
           pin: string
+          session_expires_at: string | null
+          session_token: string | null
         }
         Insert: {
           id?: number
+          must_change_pin?: boolean
           name: string
           pin: string
+          session_expires_at?: string | null
+          session_token?: string | null
         }
         Update: {
           id?: number
+          must_change_pin?: boolean
           name?: string
           pin?: string
+          session_expires_at?: string | null
+          session_token?: string | null
         }
         Relationships: []
       }
@@ -108,21 +117,7 @@ export type Database = {
       }
     }
     Views: {
-      app_user_names: {
-        Row: {
-          id: number | null
-          name: string | null
-        }
-        Insert: {
-          id?: number | null
-          name?: string | null
-        }
-        Update: {
-          id?: number | null
-          name?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       [_ in never]: never
