@@ -46,6 +46,11 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
+  --color-status-taking-off: var(--status-taking-off);
+  --color-status-bidding: var(--status-bidding);
+  --color-status-not-bidding: var(--status-not-bidding);
+  --color-status-awarded: var(--status-awarded);
+  --color-status-lost: var(--status-lost);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
