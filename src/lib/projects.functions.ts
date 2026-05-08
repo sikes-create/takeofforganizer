@@ -53,7 +53,12 @@ export const updateProject = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const session = await requireSession(data.token);
-    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    const patch: {
+      status?: string;
+      notes?: string | null;
+      claimed_by?: string | null;
+      updated_at: string;
+    } = { updated_at: new Date().toISOString() };
     if (data.patch.status !== undefined) {
       if (!STATUSES.includes(data.patch.status)) throw new Error("Invalid status");
       patch.status = data.patch.status;

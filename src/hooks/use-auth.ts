@@ -1,27 +1,57 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
-const KEY = "fence_user";
+const KEY = "fence_auth";
+
+type Auth = { name: string; token: string; mustChangePin: boolean };
+
+function read(): Auth | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(KEY);
+    return raw ? (JSON.parse(raw) as Auth) : null;
+  } catch {
+    return null;
+  }
+}
 
 export function useAuth() {
-  const [user, setUser] = useState<string | null>(null);
+  const [auth, setAuth] = useState<Auth | null>(null);
 
   useEffect(() => {
-    setUser(typeof window !== "undefined" ? localStorage.getItem(KEY) : null);
+    setAuth(read());
     const onStorage = (e: StorageEvent) => {
-      if (e.key === KEY) setUser(e.newValue);
+      if (e.key === KEY) setAuth(read());
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  const login = (name: string) => {
-    localStorage.setItem(KEY, name);
-    setUser(name);
-  };
-  const logout = () => {
-    localStorage.removeItem(KEY);
-    setUser(null);
-  };
+  const login = useCallback((a: Auth) => {
+    localStorage.setItem(KEY, JSON.stringify(a));
+    setAuth(a);
+  }, []);
 
-  return { user, login, logout };
+  const clearMustChange = useCallback(() => {
+    setAuth((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, mustChangePin: false };
+      localStorage.setItem(KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem(KEY);
+    setAuth(null);
+  }, []);
+
+  return {
+    auth,
+    user: auth?.name ?? null,
+    token: auth?.token ?? null,
+    mustChangePin: auth?.mustChangePin ?? false,
+    login,
+    logout,
+    clearMustChange,
+  };
 }
