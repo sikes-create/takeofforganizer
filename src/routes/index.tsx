@@ -3,9 +3,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, HardHat, Loader2, ShieldAlert } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { verifyPin } from "@/lib/auth.functions";
+import { listUsers, verifyPin } from "@/lib/auth.functions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,14 +30,11 @@ function LoginPage() {
   const navigate = useNavigate();
   const { user, login } = useAuth();
   const verify = useServerFn(verifyPin);
+  const fetchUsers = useServerFn(listUsers);
 
   const { data: users, isLoading, error } = useQuery({
     queryKey: ["app_users"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("app_user_names").select("id, name").order("id");
-      if (error) throw error;
-      return data as Array<{ id: number; name: string }>;
-    },
+    queryFn: () => fetchUsers(),
   });
 
   const [selected, setSelected] = useState("");
@@ -60,6 +56,7 @@ function LoginPage() {
 
   useEffect(() => {
     if (step === "pin") setTimeout(() => refs[0].current?.focus(), 50);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
   const submit = async (full: string) => {
@@ -68,8 +65,8 @@ function LoginPage() {
     try {
       const result = await verify({ data: { name: selected, pin: full } });
       if (result.ok) {
-        login(selected);
-        navigate({ to: "/board" });
+        login({ name: result.name, token: result.token, mustChangePin: result.mustChangePin });
+        navigate({ to: result.mustChangePin ? "/change-pin" : "/board" });
       } else {
         setPinError(result.error || "Incorrect PIN");
         setPin(["", "", "", ""]);
@@ -150,7 +147,7 @@ function LoginPage() {
                 Continue
               </Button>
               <p className="text-xs text-muted-foreground text-center">
-                Default PINs: Boss 1111 · Estimator 1 2222 · Estimator 2 3333
+                First-time login? Use your default PIN — you'll be asked to set a new one.
               </p>
             </>
           ) : (
@@ -160,7 +157,7 @@ function LoginPage() {
                   <Input
                     key={i}
                     ref={refs[i]}
-                    type="text"
+                    type="password"
                     inputMode="numeric"
                     maxLength={1}
                     value={d}

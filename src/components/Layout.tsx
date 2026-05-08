@@ -1,11 +1,22 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { HardHat, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { logout as logoutFn } from "@/lib/auth.functions";
 
 export function Layout({ children }: { children: ReactNode }) {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
+  const serverLogout = useServerFn(logoutFn);
+  const onLogout = async () => {
+    try {
+      if (token) await serverLogout({ data: { token } });
+    } catch {
+      // ignore — local sign-out below still happens
+    }
+    logout();
+  };
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background text-foreground">
       <header className="sticky top-0 z-50 w-full border-b border-border bg-card/80 backdrop-blur-md">
@@ -23,7 +34,7 @@ export function Layout({ children }: { children: ReactNode }) {
               <div className="text-sm text-muted-foreground hidden sm:block">
                 Signed in as <span className="text-foreground font-medium">{user}</span>
               </div>
-              <Button variant="ghost" size="sm" onClick={logout} className="gap-2">
+              <Button variant="ghost" size="sm" onClick={onLogout} className="gap-2">
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:inline">Sign out</span>
               </Button>

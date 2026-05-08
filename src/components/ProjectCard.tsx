@@ -2,75 +2,53 @@ import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { ChevronDown, ChevronUp, Pencil, Trash2, User } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+  Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { AttachmentsSection } from "./AttachmentsSection";
+import { updateProject, deleteProject, type Project } from "@/lib/projects.functions";
 
-export type Project = {
-  id: number;
-  name: string;
-  bid_due_date: string;
-  status: string;
-  notes: string | null;
-  claimed_by: string | null;
-};
+export type { Project };
 
 const STATUSES = ["Taking Off", "Bidding", "Not Bidding", "Awarded", "Lost"];
 
 function statusClasses(s: string) {
   switch (s) {
-    case "Taking Off":
-      return "bg-[var(--status-taking-off)]/15 text-[var(--status-taking-off)] border border-[var(--status-taking-off)]/40";
-    case "Bidding":
-      return "bg-[var(--status-bidding)]/15 text-[var(--status-bidding)] border border-[var(--status-bidding)]/40";
-    case "Not Bidding":
-      return "bg-[var(--status-not-bidding)]/15 text-[var(--status-not-bidding)] border border-[var(--status-not-bidding)]/40";
-    case "Awarded":
-      return "bg-[var(--status-awarded)]/15 text-[var(--status-awarded)] border border-[var(--status-awarded)]/40";
-    case "Lost":
-      return "bg-[var(--status-lost)]/15 text-[var(--status-lost)] border border-[var(--status-lost)]/40";
-    default:
-      return "bg-muted text-muted-foreground";
+    case "Taking Off": return "bg-[var(--status-taking-off)]/15 text-[var(--status-taking-off)] border border-[var(--status-taking-off)]/40";
+    case "Bidding": return "bg-[var(--status-bidding)]/15 text-[var(--status-bidding)] border border-[var(--status-bidding)]/40";
+    case "Not Bidding": return "bg-[var(--status-not-bidding)]/15 text-[var(--status-not-bidding)] border border-[var(--status-not-bidding)]/40";
+    case "Awarded": return "bg-[var(--status-awarded)]/15 text-[var(--status-awarded)] border border-[var(--status-awarded)]/40";
+    case "Lost": return "bg-[var(--status-lost)]/15 text-[var(--status-lost)] border border-[var(--status-lost)]/40";
+    default: return "bg-muted text-muted-foreground";
   }
 }
 
 export function ProjectCard({ project }: { project: Project }) {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const qc = useQueryClient();
+  const updateFn = useServerFn(updateProject);
+  const deleteFn = useServerFn(deleteProject);
   const [expanded, setExpanded] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState(project.notes || "");
 
   const update = useMutation({
-    mutationFn: async (patch: Partial<Project>) => {
-      const { error } = await supabase.from("projects").update(patch).eq("id", project.id);
-      if (error) throw error;
+    mutationFn: async (patch: { status?: string; notes?: string | null; claimed_by?: string | null }) => {
+      if (!token) throw new Error("Not signed in");
+      await updateFn({ data: { token, id: project.id, patch } });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["projects"] }),
     onError: (e: Error) => toast.error(e.message),
@@ -78,13 +56,14 @@ export function ProjectCard({ project }: { project: Project }) {
 
   const del = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("projects").delete().eq("id", project.id);
-      if (error) throw error;
+      if (!token) throw new Error("Not signed in");
+      await deleteFn({ data: { token, id: project.id } });
     },
     onSuccess: () => {
       toast.success("Project deleted");
       qc.invalidateQueries({ queryKey: ["projects"] });
     },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const isMine = project.claimed_by === user;
@@ -207,29 +186,15 @@ export function ProjectCard({ project }: { project: Project }) {
                   autoFocus
                 />
                 <div className="flex justify-end gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setEditingNotes(false);
-                      setNotesValue(project.notes || "");
-                    }}
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => { setEditingNotes(false); setNotesValue(project.notes || ""); }}>
                     Cancel
                   </Button>
                   <Button
                     size="sm"
-                    onClick={() =>
-                      update.mutate(
-                        { notes: notesValue },
-                        {
-                          onSuccess: () => {
-                            setEditingNotes(false);
-                            toast.success("Notes updated");
-                          },
-                        }
-                      )
-                    }
+                    onClick={() => update.mutate(
+                      { notes: notesValue },
+                      { onSuccess: () => { setEditingNotes(false); toast.success("Notes updated"); } },
+                    )}
                     disabled={update.isPending}
                   >
                     Save
