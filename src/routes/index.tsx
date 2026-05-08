@@ -146,9 +146,6 @@ function LoginPage() {
               <Button className="w-full" disabled={!selected} onClick={() => setStep("pin")}>
                 Continue
               </Button>
-              <p className="text-xs text-muted-foreground text-center">
-                First-time login? Use your default PIN — you'll be asked to set a new one.
-              </p>
             </>
           ) : (
             <>
