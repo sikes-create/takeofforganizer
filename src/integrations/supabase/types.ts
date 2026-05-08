@@ -14,10 +14,115 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      app_users: {
+        Row: {
+          id: number
+          name: string
+          pin: string
+        }
+        Insert: {
+          id?: number
+          name: string
+          pin: string
+        }
+        Update: {
+          id?: number
+          name?: string
+          pin?: string
+        }
+        Relationships: []
+      }
+      attachments: {
+        Row: {
+          created_at: string
+          filename: string | null
+          id: number
+          label: string
+          original_name: string | null
+          project_id: number
+          type: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          filename?: string | null
+          id?: number
+          label: string
+          original_name?: string | null
+          project_id: number
+          type?: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          filename?: string | null
+          id?: number
+          label?: string
+          original_name?: string | null
+          project_id?: number
+          type?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          bid_due_date: string
+          claimed_by: string | null
+          created_at: string
+          id: number
+          name: string
+          notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bid_due_date: string
+          claimed_by?: string | null
+          created_at?: string
+          id?: number
+          name: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bid_due_date?: string
+          claimed_by?: string | null
+          created_at?: string
+          id?: number
+          name?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      app_user_names: {
+        Row: {
+          id: number | null
+          name: string | null
+        }
+        Insert: {
+          id?: number | null
+          name?: string | null
+        }
+        Update: {
+          id?: number | null
+          name?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
