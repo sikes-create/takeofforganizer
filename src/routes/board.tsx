@@ -49,7 +49,13 @@ function BoardPage() {
   const { data: projectResult, isLoading, error } = useQuery({
     queryKey: ["projects", token],
     enabled: !!token,
-    refetchInterval: 4000,
+    refetchInterval: (q) => {
+      const d = q.state.data as { ok: boolean } | undefined;
+      if (q.state.error) return false;
+      if (d && !d.ok) return false;
+      return 4000;
+    },
+    refetchIntervalInBackground: false,
     retry: false,
     queryFn: () => fetchProjects({ data: { token: token! } }),
   });
