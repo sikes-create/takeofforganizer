@@ -46,7 +46,7 @@ function BoardPage() {
     if (checked && user && mustChangePin) navigate({ to: "/change-pin" });
   }, [user, mustChangePin, navigate, checked]);
 
-  const { data: projects, isLoading, error } = useQuery({
+  const { data: projectResult, isLoading, error } = useQuery({
     queryKey: ["projects", token],
     enabled: !!token,
     refetchInterval: 4000,
@@ -54,14 +54,17 @@ function BoardPage() {
     queryFn: () => fetchProjects({ data: { token: token! } }),
   });
 
+  const sessionError = projectResult && !projectResult.ok ? projectResult.error : null;
+  const projects = projectResult?.ok ? projectResult.projects : [];
+
   useEffect(() => {
-    if (!error) return;
-    const msg = (error as Error).message || "";
+    const msg = sessionError || (error as Error | null)?.message || "";
+    if (!msg) return;
     if (/Session (invalid|expired)|Not signed in/i.test(msg)) {
       logout();
       navigate({ to: "/" });
     }
-  }, [error, logout, navigate]);
+  }, [error, logout, navigate, sessionError]);
 
   const filtered = useMemo(() => {
     let list: Project[] = projects || [];
