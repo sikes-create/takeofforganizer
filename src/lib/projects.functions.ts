@@ -18,13 +18,17 @@ const STATUSES = ["Taking Off", "Bidding", "Not Bidding", "Awarded", "Lost"];
 export const listProjects = createServerFn({ method: "POST" })
   .inputValidator((data: { token: string }) => data)
   .handler(async ({ data }) => {
-    await requireSession(data.token);
+    try {
+      await requireSession(data.token);
+    } catch (e) {
+      return { ok: false as const, error: (e as Error).message, projects: [] as Project[] };
+    }
     const { data: rows, error } = await supabaseAdmin
       .from("projects")
       .select("*")
       .order("bid_due_date", { ascending: true });
-    if (error) throw new Error(error.message);
-    return (rows || []) as Project[];
+    if (error) return { ok: false as const, error: error.message, projects: [] as Project[] };
+    return { ok: true as const, projects: (rows || []) as Project[] };
   });
 
 export const createProject = createServerFn({ method: "POST" })
