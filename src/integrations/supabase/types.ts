@@ -86,6 +86,7 @@ export type Database = {
         Row: {
           bid_due_date: string
           claimed_by: string | null
+          contract_amount: number | null
           created_at: string
           id: number
           name: string
@@ -96,6 +97,7 @@ export type Database = {
         Insert: {
           bid_due_date: string
           claimed_by?: string | null
+          contract_amount?: number | null
           created_at?: string
           id?: number
           name: string
@@ -106,6 +108,7 @@ export type Database = {
         Update: {
           bid_due_date?: string
           claimed_by?: string | null
+          contract_amount?: number | null
           created_at?: string
           id?: number
           name?: string
