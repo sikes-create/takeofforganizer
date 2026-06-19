@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ContractsRouteImport } from './routes/contracts'
 import { Route as ChangePinRouteImport } from './routes/change-pin'
 import { Route as BoardRouteImport } from './routes/board'
 import { Route as IndexRouteImport } from './routes/index'
 
+const ContractsRoute = ContractsRouteImport.update({
+  id: '/contracts',
+  path: '/contracts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChangePinRoute = ChangePinRouteImport.update({
   id: '/change-pin',
   path: '/change-pin',
@@ -33,34 +39,45 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/board': typeof BoardRoute
   '/change-pin': typeof ChangePinRoute
+  '/contracts': typeof ContractsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/board': typeof BoardRoute
   '/change-pin': typeof ChangePinRoute
+  '/contracts': typeof ContractsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/board': typeof BoardRoute
   '/change-pin': typeof ChangePinRoute
+  '/contracts': typeof ContractsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/board' | '/change-pin'
+  fullPaths: '/' | '/board' | '/change-pin' | '/contracts'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/board' | '/change-pin'
-  id: '__root__' | '/' | '/board' | '/change-pin'
+  to: '/' | '/board' | '/change-pin' | '/contracts'
+  id: '__root__' | '/' | '/board' | '/change-pin' | '/contracts'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BoardRoute: typeof BoardRoute
   ChangePinRoute: typeof ChangePinRoute
+  ContractsRoute: typeof ContractsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/contracts': {
+      id: '/contracts'
+      path: '/contracts'
+      fullPath: '/contracts'
+      preLoaderRoute: typeof ContractsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/change-pin': {
       id: '/change-pin'
       path: '/change-pin'
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BoardRoute: BoardRoute,
   ChangePinRoute: ChangePinRoute,
+  ContractsRoute: ContractsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
