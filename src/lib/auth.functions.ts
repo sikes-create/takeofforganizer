@@ -72,6 +72,7 @@ export const changePin = createServerFn({ method: "POST" })
     if (!/^\d{4}$/.test(pin)) {
       return { ok: false as const, error: "PIN must be 4 digits" };
     }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("app_users")
       .update({ pin, must_change_pin: false })
