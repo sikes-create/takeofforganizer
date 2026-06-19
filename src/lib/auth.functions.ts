@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const SESSION_DAYS = 30;
 
@@ -11,6 +10,7 @@ function newToken() {
 
 export async function requireSession(token: string | undefined | null) {
   if (!token) throw new Error("Not signed in");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("app_users")
     .select("id, name, must_change_pin, session_expires_at")
@@ -24,6 +24,7 @@ export async function requireSession(token: string | undefined | null) {
 }
 
 export const listUsers = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("app_users")
     .select("id, name")
@@ -37,6 +38,7 @@ export const verifyPin = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { name, pin } = data;
     if (!name || !pin) return { ok: false as const, error: "Name and PIN are required" };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("app_users")
       .select("id, name, pin, must_change_pin")
@@ -70,6 +72,7 @@ export const changePin = createServerFn({ method: "POST" })
     if (!/^\d{4}$/.test(pin)) {
       return { ok: false as const, error: "PIN must be 4 digits" };
     }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("app_users")
       .update({ pin, must_change_pin: false })
@@ -82,6 +85,7 @@ export const logout = createServerFn({ method: "POST" })
   .inputValidator((data: { token: string }) => data)
   .handler(async ({ data }) => {
     if (data.token) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabaseAdmin
         .from("app_users")
         .update({ session_token: null, session_expires_at: null })
