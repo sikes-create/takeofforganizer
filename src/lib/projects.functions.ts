@@ -11,6 +11,7 @@ export type Project = {
   claimed_by: string | null;
   created_at: string;
   updated_at: string;
+  contract_amount: number | null;
 };
 
 const STATUSES = ["Taking Off", "Bidding", "Not Bidding", "Awarded", "Lost"];
@@ -52,7 +53,7 @@ export const updateProject = createServerFn({ method: "POST" })
     (data: {
       token: string;
       id: number;
-      patch: { status?: string; notes?: string | null; claimed_by?: string | null };
+      patch: { status?: string; notes?: string | null; claimed_by?: string | null; contract_amount?: number | null };
     }) => data,
   )
   .handler(async ({ data }) => {
@@ -61,6 +62,7 @@ export const updateProject = createServerFn({ method: "POST" })
       status?: string;
       notes?: string | null;
       claimed_by?: string | null;
+      contract_amount?: number | null;
       updated_at: string;
     } = { updated_at: new Date().toISOString() };
     if (data.patch.status !== undefined) {
@@ -76,6 +78,15 @@ export const updateProject = createServerFn({ method: "POST" })
         throw new Error("Can only claim as yourself");
       }
       patch.claimed_by = data.patch.claimed_by;
+    }
+    if (data.patch.contract_amount !== undefined) {
+      if (data.patch.contract_amount === null) {
+        patch.contract_amount = null;
+      } else {
+        const n = Number(data.patch.contract_amount);
+        if (!Number.isFinite(n) || n < 0 || n > 999999999) throw new Error("Invalid contract amount");
+        patch.contract_amount = Math.round(n * 100) / 100;
+      }
     }
     const { error } = await supabaseAdmin.from("projects").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);

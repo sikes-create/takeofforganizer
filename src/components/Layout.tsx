@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { HardHat, LogOut } from "lucide-react";
+import { FileSignature, HardHat, LayoutGrid, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { logout as logoutFn } from "@/lib/auth.functions";
@@ -26,11 +26,28 @@ export function Layout({ children }: { children: ReactNode }) {
               <HardHat className="h-5 w-5 text-primary-foreground" />
             </div>
             <Link to="/" className="font-bold text-xl tracking-tight">
-              Takeoff Tracker
+              Custom Fence LLC Hub
             </Link>
           </div>
           {user && (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <nav className="flex items-center gap-1">
+                <Link
+                  to="/board"
+                  className="text-sm font-medium px-3 py-1.5 rounded-md hover:bg-accent flex items-center gap-1.5 [&.active]:bg-accent [&.active]:text-foreground text-muted-foreground"
+                  activeOptions={{ exact: true }}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  <span className="hidden sm:inline">Board</span>
+                </Link>
+                <Link
+                  to="/contracts"
+                  className="text-sm font-medium px-3 py-1.5 rounded-md hover:bg-accent flex items-center gap-1.5 [&.active]:bg-accent [&.active]:text-foreground text-muted-foreground"
+                >
+                  <FileSignature className="h-4 w-4" />
+                  <span className="hidden sm:inline">Contracts</span>
+                </Link>
+              </nav>
               <div className="text-sm text-muted-foreground hidden sm:block">
                 Signed in as <span className="text-foreground font-medium">{user}</span>
               </div>

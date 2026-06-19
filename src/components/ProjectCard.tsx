@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
-import { ChevronDown, ChevronUp, Pencil, Trash2, User } from "lucide-react";
+import { ChevronDown, ChevronUp, DollarSign, Pencil, Trash2, User } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { AttachmentsSection } from "./AttachmentsSection";
 import { updateProject, deleteProject, type Project } from "@/lib/projects.functions";
 
@@ -44,9 +45,13 @@ export function ProjectCard({ project }: { project: Project }) {
   const [expanded, setExpanded] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState(project.notes || "");
+  const [editingContract, setEditingContract] = useState(false);
+  const [contractValue, setContractValue] = useState(
+    project.contract_amount != null ? String(project.contract_amount) : "",
+  );
 
   const update = useMutation({
-    mutationFn: async (patch: { status?: string; notes?: string | null; claimed_by?: string | null }) => {
+    mutationFn: async (patch: { status?: string; notes?: string | null; claimed_by?: string | null; contract_amount?: number | null }) => {
       if (!token) throw new Error("Not signed in");
       await updateFn({ data: { token, id: project.id, patch } });
     },
@@ -167,6 +172,66 @@ export function ProjectCard({ project }: { project: Project }) {
         </div>
 
         <CollapsibleContent className="pt-3 pb-1 space-y-4">
+          {project.status === "Awarded" && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                  <DollarSign className="h-3.5 w-3.5" />
+                  Contract Amount
+                </h4>
+                {!editingContract && (
+                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setEditingContract(true)}>
+                    {project.contract_amount != null ? "Edit" : "Add"}
+                  </Button>
+                )}
+              </div>
+              {editingContract ? (
+                <div className="space-y-2">
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
+                    value={contractValue}
+                    onChange={(e) => setContractValue(e.target.value)}
+                    placeholder="e.g. 12500.00"
+                    autoFocus
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => {
+                      setEditingContract(false);
+                      setContractValue(project.contract_amount != null ? String(project.contract_amount) : "");
+                    }}>Cancel</Button>
+                    {project.contract_amount != null && (
+                      <Button variant="outline" size="sm" onClick={() => update.mutate(
+                        { contract_amount: null },
+                        { onSuccess: () => { setEditingContract(false); setContractValue(""); toast.success("Cleared"); } },
+                      )}>Clear</Button>
+                    )}
+                    <Button size="sm" disabled={update.isPending} onClick={() => {
+                      const n = Number(contractValue);
+                      if (!Number.isFinite(n) || n < 0) { toast.error("Enter a valid amount"); return; }
+                      update.mutate(
+                        { contract_amount: n },
+                        { onSuccess: () => { setEditingContract(false); toast.success("Contract saved"); } },
+                      );
+                    }}>Save</Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm bg-background/50 rounded p-2">
+                  {project.contract_amount != null ? (
+                    <span className="font-semibold text-[var(--status-awarded)]">
+                      ${Number(project.contract_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  ) : (
+                    <span className="italic text-muted-foreground opacity-70">No contract amount yet</span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold">Notes</h4>
